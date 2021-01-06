@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Microsoft.IdentityModel.Tokens;
 using Ninject;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -17,12 +19,7 @@ namespace XUnitTestProject.Pages
     {
         public IWebDriver driver;
 
-        private readonly IKernel _kernel;
-
-        // Inject in our container (using Ninject here)
-        public BasePage(IKernel kernel)
-        { _kernel = kernel; }
-
+      
         private IWebDriver SetupWebDriver()
         {
             var options = new ChromeOptions();
@@ -31,25 +28,7 @@ namespace XUnitTestProject.Pages
             return new ChromeDriver(options);
         }
 
-        [Before]
-        public void BeforeScenario(ScenarioInfo scenario)
-        {
-            var webdriver = SetupWebDriver();
-            _kernel.Bind<IWebDriver>().ToConstant(webdriver);
-            Console.WriteLine("BeforeScenario: "+scenario.Title);
-        }
-
-        [AfterScenario]
-        public void AfterScenario()
-        {
-            var webDriver = _kernel.Get<IWebDriver>();
-            Console.WriteLine("AfterScenario");
-            // Output any screenshots or log dumps etc
-
-            webDriver.Close();
-            webDriver.Dispose();
-        }
-
+       
         public IWebDriver StartDriver(BrowserType browserType)
         {
             switch (browserType)
@@ -129,6 +108,7 @@ namespace XUnitTestProject.Pages
         {
             Find(locator).SendKeys(inputText);
         }
+
         /// <summary>
         /// Waits  for an element to be visible, then returns it
         /// </summary>
@@ -171,7 +151,7 @@ namespace XUnitTestProject.Pages
             int windowCount = allWindows.Count;
             if (windowCount > 1)
             {
-                driver.SwitchTo().Window(driver.WindowHandles[windowCount-1]);
+                driver.SwitchTo().Window(driver.WindowHandles[windowCount - 1]);
             }
             Console.WriteLine("Switched to Window : " + driver.CurrentWindowHandle + " - Title is - " + driver.Title);
         }
@@ -242,7 +222,7 @@ namespace XUnitTestProject.Pages
             string[] steps = pathDelimited.Split('>');
             foreach (string step in steps)
             {
-                Find(By.XPath("//a[text()='"+step.Trim()+"']")).Click();
+                Find(By.XPath("//a[text()='" + step.Trim() + "']")).Click();
             }
         }
 
@@ -263,6 +243,26 @@ namespace XUnitTestProject.Pages
         public void Clear(By locator)
         {
             Find(locator).Clear();
+        }
+
+        public static String GetTimestamp(DateTime value)
+        {
+            return value.ToString("yyyyMMddHHmmssffff");
+        }
+
+        public static String GetTimestamp()
+        {
+            return new DateTime().ToString("yyyyMMddHHmmssffff");
+        }
+       
+
+        public string TakeScreenshot()
+        {
+            string dir = AppDomain.CurrentDomain.BaseDirectory.Replace("\\bin\\Debug", "");
+            string path = dir + "Screenshot\\" + GetTimestamp() + ".png";
+            Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
+            screenshot.SaveAsFile(path, ScreenshotImageFormat.Png);
+            return path;
         }
 
 
@@ -423,6 +423,11 @@ namespace XUnitTestProject.Pages
         }
 
         public void Dispose()
+        {
+            driver.Dispose();
+        }
+
+        ~BasePage()
         {
             driver.Quit();
             driver.Dispose();

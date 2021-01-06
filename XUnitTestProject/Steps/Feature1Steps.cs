@@ -3,7 +3,6 @@ using OpenQA.Selenium;
 using System;
 using TechTalk.SpecFlow;
 using XUnitTestProject.Pages;
-using OpenQA.Selenium.Support.PageObjects;
 
 namespace XUnitTestProject.Features
 {
@@ -15,22 +14,11 @@ namespace XUnitTestProject.Features
 
         readonly Feature1Page feature1page = new Feature1Page();
 
-        private readonly ScenarioContext _scenarioContext;
-        private readonly FeatureContext _featureContext;
-
-
-        public Feature1Steps(ScenarioContext scenarioContext, FeatureContext featureContext)
-        {
-            _scenarioContext = scenarioContext;
-            _featureContext = featureContext;
-        }
-
         [Given(@"user is on (.*)")]
         public void GivenUserIsOnUrl(string URL)
         {
             feature1page.NavigateTo(URL);
             Console.WriteLine("user is on "+URL);
-            TestRunner.Test.Pass(_scenarioContext.ScenarioInfo.Title);
         }
         
         [When(@"navigate menu (.*)")]
